@@ -23,12 +23,12 @@ pub struct Settings {
     pub chunk_range: Range<usize>,
 }
 
-pub struct Genetic<T>
+pub struct Genetic<T, I>
 where
-    T: Problem,
+    T: Problem<Individual = I>,
 {
     problem: T,
-    population: Vec<Vec<f64>>,
+    population: Vec<I>,
     pop_size: usize,
     num_best: usize,
     mutation_rate: f32,
@@ -39,15 +39,17 @@ where
 }
 
 pub trait Problem {
-    fn initial_pop(&mut self) -> Vec<Vec<f64>>;
-    fn fitness(&self, individual: &Vec<f64>) -> f64;
-    fn crossover(&mut self, a: &Vec<f64>, b: &Vec<f64>) -> (Vec<f64>, Vec<f64>);
-    fn mutate(&mut self, individual: &mut Vec<f64>);
+    type Individual;
+    fn initial_pop(&mut self) -> Vec<Self::Individual>;
+    fn fitness(&self, individual: &Self::Individual) -> f64;
+    fn crossover(&mut self, a: &Self::Individual, b: &Self::Individual) -> (Self::Individual, Self::Individual);
+    fn mutate(&mut self, individual: &mut Self::Individual);
 }
 
-impl<T> Genetic<T>
+impl<T, I> Genetic<T, I>
 where
-    T: Problem,
+    I: Clone,
+    T: Problem<Individual = I>,
 {
     pub fn new(mut problem: T, settings: Settings) -> Self {
         let Settings {
@@ -81,8 +83,9 @@ where
         sort_by_fitness(&mut self.population, &self.problem);
     }
 
-    fn breed(&mut self) -> Vec<Vec<f64>> {
+    fn breed(&mut self) -> Vec<I> {
         let Self {
+            num_best,
             pop_size,
             mutation_rate,
             ref mut rng,
@@ -92,8 +95,11 @@ where
             ..
         } = *self;
         //TODO reuse this buffer
-        let mut new_population = Vec::<Vec<f64>>::with_capacity(pop_size);
-        for i in (0..(pop_size - 1)).step_by(2) {
+        let mut new_population = Vec::<I>::with_capacity(pop_size);
+        for i in 0..num_best {
+            new_population.push(population.get(i).expect("outside bounds").clone());
+        }
+        for i in (num_best..(pop_size - 1)).step_by(2) {
             let (mut first_result, mut second_result) =
                 problem.crossover(&population[choices[i]], &population[choices[i + 1]]);
             if rng.gen::<f32>() < mutation_rate {
@@ -108,7 +114,7 @@ where
         new_population
     }
 
-    pub fn get(self) -> Vec<Vec<f64>> {
+    pub fn get(self) -> Vec<I> {
         self.population
     }
 
@@ -150,6 +156,6 @@ where
     }
 }
 
-fn sort_by_fitness<T: Problem>(population: &mut Vec<Vec<f64>>, problem: &T) {
+fn sort_by_fitness<I, T: Problem<Individual=I>>(population: &mut Vec<I>, problem: &T) {
     population.sort_by(|a, b| problem.fitness(b).partial_cmp(&problem.fitness(a)).unwrap());
 }

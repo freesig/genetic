@@ -3,15 +3,16 @@ use {sort_by_fitness, Problem};
 struct TestProblem;
 
 impl Problem for TestProblem {
-    fn initial_pop(&mut self) -> Vec<Vec<f64>> {
+    type Individual = Vec<f64>;
+    fn initial_pop(&mut self) -> Vec<Self::Individual> {
         unimplemented!()
     }
 
-    fn fitness(&self, population: &Vec<f64>) -> f64 {
+    fn fitness(&self, population: &Self::Individual) -> f64 {
         population.iter().sum()
     }
 
-    fn crossover(&mut self, a: &Vec<f64>, b: &Vec<f64>) -> (Vec<f64>, Vec<f64>) {
+    fn crossover(&mut self, a: &Self::Individual, b: &Self::Individual) -> (Self::Individual, Self::Individual) {
         let cut_at = 1;
         let mut c = a[..cut_at].to_vec();
         let mut x = b[cut_at..].to_vec();
@@ -22,7 +23,7 @@ impl Problem for TestProblem {
         (c, d)
     }
     
-    fn mutate(&mut self, individual: &mut Vec<f64>){
+    fn mutate(&mut self, _individual: &mut Self::Individual){
         unimplemented!()
     }
 }
