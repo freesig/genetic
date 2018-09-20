@@ -8,7 +8,7 @@ impl Problem for TestProblem {
         unimplemented!()
     }
 
-    fn fitness(&self, population: &Self::Individual) -> f64 {
+    fn fitness(&mut self, population: &Self::Individual) -> f64 {
         population.iter().sum()
     }
 
@@ -39,7 +39,7 @@ fn evolve_sort() {
     population.push(vec![0.1, 0.4]);
     population.push(vec![0.1, 0.2]);
     population.push(vec![0.2, 0.2]);
-    let problem = setup();
-    sort_by_fitness(&mut population, &problem);
+    let mut problem = setup();
+    sort_by_fitness(&mut population, &mut problem);
     assert_eq!(goal, population);
 }

@@ -14,7 +14,7 @@ impl Problem for DNA {
         let dna = vec![0.5, 0.6, 0.2, 0.4, 0.4, 0.7];
         vec![dna.clone(); 14]
     }
-    fn fitness(&self, individual: &Self::Individual) -> f64 {
+    fn fitness(&mut self, individual: &Self::Individual) -> f64 {
         // Distance from 0.5
         individual
             .iter()

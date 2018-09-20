@@ -44,7 +44,7 @@ where
 pub trait Problem {
     type Individual;
     fn initial_pop(&mut self) -> Vec<Self::Individual>;
-    fn fitness(&self, individual: &Self::Individual) -> f64;
+    fn fitness(&mut self, individual: &Self::Individual) -> f64;
     fn crossover(
         &mut self,
         a: &Self::Individual,
@@ -89,7 +89,7 @@ where
     pub fn evolve(&mut self) {
         self.tournaments();
         self.breed();
-        sort_by_fitness(&mut self.new_population, &self.problem);
+        sort_by_fitness(&mut self.new_population, &mut self.problem);
         // Swap buffers
         mem::swap(&mut self.population, &mut self.new_population);
     }
@@ -146,7 +146,7 @@ where
     fn tournament(&mut self) -> usize {
         let Self {
             pop_size,
-            ref problem,
+            ref mut problem,
             ref population,
             ref chunk_range,
             tournament_size,
@@ -168,7 +168,7 @@ where
         best_i.expect("Tournament failed")
     }
 
-    pub fn stats(&self, n: usize) {
+    pub fn stats(&mut self, n: usize) {
         let n = if n <= self.pop_size { n } else { self.pop_size };
         for i in 0..n {
             let fit = self.problem.fitness(&self.population[i]);
@@ -177,6 +177,6 @@ where
     }
 }
 
-fn sort_by_fitness<I, T: Problem<Individual = I>>(population: &mut Vec<I>, problem: &T) {
+fn sort_by_fitness<I, T: Problem<Individual = I>>(population: &mut Vec<I>, problem: &mut T) {
     population.sort_by(|a, b| problem.fitness(b).partial_cmp(&problem.fitness(a)).unwrap());
 }
