@@ -2,6 +2,8 @@ extern crate rand;
 use rand::prelude::*;
 use std::f64::INFINITY;
 use std::ops::Range;
+use std::mem;
+use std::fmt::Debug;
 
 #[cfg(test)]
 mod tests;
@@ -29,6 +31,7 @@ where
 {
     problem: T,
     population: Vec<I>,
+    new_population: Vec<I>,
     pop_size: usize,
     num_best: usize,
     mutation_rate: f32,
@@ -52,7 +55,7 @@ pub trait Problem {
 
 impl<T, I> Genetic<T, I>
 where
-    I: Clone,
+    I: Clone + Default + Debug,
     T: Problem<Individual = I>,
 {
     pub fn new(mut problem: T, settings: Settings) -> Self {
@@ -64,6 +67,7 @@ where
             num_best,
         } = settings;
         let population = problem.initial_pop();
+        let new_population = vec![I::default(); pop_size];
         assert!(pop_size % 2 == 0);
         assert!(pop_size == population.len());
         let rng = thread_rng();
@@ -71,6 +75,7 @@ where
         Genetic {
             problem,
             population,
+            new_population,
             pop_size,
             mutation_rate,
             num_best,
@@ -83,25 +88,26 @@ where
 
     pub fn evolve(&mut self) {
         self.tournaments();
-        self.population = self.breed();
-        sort_by_fitness(&mut self.population, &self.problem);
+        self.breed();
+        sort_by_fitness(&mut self.new_population, &self.problem);
+        // Swap buffers
+        mem::swap(&mut self.population, &mut self.new_population);
     }
 
-    fn breed(&mut self) -> Vec<I> {
+    fn breed(&mut self) {
         let Self {
             num_best,
             pop_size,
             mutation_rate,
             ref mut rng,
             ref mut problem,
+            ref mut new_population,
             ref population,
             ref choices,
             ..
         } = *self;
-        //TODO reuse this buffer
-        let mut new_population = Vec::<I>::with_capacity(pop_size);
         for i in 0..num_best {
-            new_population.push(population.get(i).expect("outside bounds").clone());
+            new_population[i] = population.get(i).expect("outside bounds").clone();
         }
         for i in (num_best..(pop_size - 1)).step_by(2) {
             let (mut first_result, mut second_result) =
@@ -112,10 +118,9 @@ where
             if rng.gen::<f32>() < mutation_rate {
                 problem.mutate(&mut second_result)
             }
-            new_population.push(first_result);
-            new_population.push(second_result);
+            new_population[i] = first_result;
+            new_population[i + 1] = second_result;
         }
-        new_population
     }
 
     pub fn get(&self) -> &Vec<I> {
