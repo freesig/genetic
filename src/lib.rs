@@ -153,12 +153,13 @@ where
             ref mut rng,
             ..
         } = *self;
+        // Start with worst possible score
         let mut best = -INFINITY;
         let mut best_i: Option<usize> = None;
-        let chunk_size: usize = rng.gen_range(chunk_range.start, chunk_range.end);
-        let start_position: usize = rng.gen_range(0, pop_size - chunk_size);
+
+        let chunk = make_chunk(pop_size, chunk_range, rng);
         for _i in 0..tournament_size {
-            let rand_i = rng.gen_range(start_position, start_position + chunk_size);
+            let rand_i = rng.gen_range(chunk.start, chunk.end);
             let ind = problem.fitness(population.get(rand_i).unwrap());
             if ind >= best {
                 best = ind;
@@ -183,4 +184,13 @@ where
 
 fn sort_by_fitness<I, T: Problem<Individual = I>>(population: &mut Vec<I>, problem: &mut T) {
     population.sort_by(|a, b| problem.fitness(b).partial_cmp(&problem.fitness(a)).unwrap());
+}
+
+fn make_chunk(pop_size: usize, possible_size: &Range<usize>, rng: &mut ThreadRng) -> Range<usize> {
+    assert!(possible_size.start > 0 && possible_size.end <= pop_size);
+    // Chunk size needs to be (0..pop_size]
+    let chunk_size = rng.gen_range(possible_size.start, possible_size.end);
+    let chunk_start = rng.gen_range(0, pop_size - chunk_size);
+    let chunk = chunk_start..(chunk_start + chunk_size);
+    chunk
 }
