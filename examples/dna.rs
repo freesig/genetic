@@ -52,15 +52,16 @@ fn main() {
         num_best: 0,
         tournament_size: 10,
         chunk_range: 2..4,
+        debug: true,
     };
-    let generations = 100000000;
+    let generations = 10000;
     let mut ga = Genetic::new(problem, settings);
     for _i in 0..generations {
         ga.evolve();
         ga.stats(5);
         println!("Best: {:?}", ga.get().first().unwrap());
-        ga.show_histogram();
     }
+    ga.show_histogram();
     println!("Top: {}", ga.top());
     println!("Result: {:?}", ga.take());
 }

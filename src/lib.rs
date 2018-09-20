@@ -1,5 +1,5 @@
-extern crate rand;
 extern crate histogram as hist;
+extern crate rand;
 extern crate textplots;
 use rand::prelude::*;
 use std::f64::INFINITY;
@@ -26,6 +26,9 @@ pub struct Settings {
     /// The actual size is chosen at random but
     /// is within these bounds
     pub chunk_range: Range<usize>,
+    /// Collects data for debugging purposes.
+    /// Runs slower, don't use in production.
+    pub debug: bool,
 }
 
 pub struct Genetic<T, I>
@@ -42,6 +45,7 @@ where
     chunk_range: Range<usize>,
     choices: Vec<usize>,
     rng: ThreadRng,
+    histo: Option<hist::Histogram>,
 }
 
 pub trait Problem {
@@ -68,6 +72,7 @@ where
             chunk_range,
             tournament_size,
             num_best,
+            debug,
         } = settings;
         assert!(pop_size % 2 == 0, "Population must be even");
         assert!(pop_size > 0, "Can't have no population");
@@ -79,10 +84,18 @@ where
             mutation_rate >= 0.0 && mutation_rate <= 1.0,
             "Mutation rate needs to be between 0.0 and 1.0"
         );
-        assert!(chunk_range.end <= pop_size, "Chunk range must be <= population");
+        assert!(
+            chunk_range.end <= pop_size,
+            "Chunk range must be <= population"
+        );
         assert!(num_best <= pop_size, "Num best must be <= population");
         let rng = thread_rng();
         let choices = vec![0; pop_size];
+        let histo = if debug {
+            Some(hist::Histogram::new())
+        } else {
+            None
+        };
         Genetic {
             problem,
             population,
@@ -94,6 +107,7 @@ where
             tournament_size,
             rng,
             choices,
+            histo,
         }
     }
 
@@ -101,6 +115,7 @@ where
         self.tournaments();
         self.breed();
         sort_by_fitness(&mut self.new_population, &mut self.problem);
+        self.collect_data();
         // Swap buffers
         mem::swap(&mut self.population, &mut self.new_population);
     }
@@ -195,30 +210,35 @@ where
         self.problem.fitness(&self.population[0])
     }
 
-    pub fn show_histogram(&self) {
-        let mut histo = hist::Histogram::new();
-        for x in &self.choices {
-            histo.increment(*x as u64);
+    fn collect_data(&mut self) {
+        let Self {
+            histo,
+            choices,
+            ..
+        } = self;
+        if let Some(histo) = histo {
+            for x in choices {
+                histo.increment(*x as u64).unwrap();
+            }
         }
-        let min = histo.minimum().unwrap() as f32;
-        let max = histo.maximum().unwrap() as f32;
-        /*
-        let points: Vec<(f32, f32)> = (0..10_i32)
-            .map(|i| (i * 10) as f64)
-            .map(|i| (i as f32, histo.percentile(i).unwrap() as f32))
-            .collect();
-            */
-        let points: Vec<(f32, f32)> = histo.into_iter()
-            .map(|h| (h.value() as f32, h.count() as f32))
-            .collect();
+    }
 
-        //let hist_disp = textplots::utils::histogram(&points, 0.0, 100.0, 10);
-        textplots::Chart::new(180, 60, 0.0, self.pop_size as f32)
-            .lineplot( textplots::Shape::Bars(&points) )
-            .nice();
-        //println!("choices: {:?}", self.choices);
-        //println!("min {}, max {}", min, max);
-        //println!("Standard deviation {}", histo.stddev().unwrap());
+    pub fn show_histogram(&self) {
+        match self.histo {
+            Some(ref histo) => {
+                let points: Vec<(f32, f32)> = histo
+                    .into_iter()
+                    .map(|h| (h.value() as f32, h.count() as f32))
+                    .collect();
+
+                textplots::Chart::new(180, 60, 0.0, (self.pop_size - 1) as f32)
+                    .lineplot(textplots::Shape::Bars(&points))
+                    .nice();
+
+                println!("Standard deviation {}", histo.stddev().unwrap());
+            },
+            None => println!("Debug is disabled. Set to 'true' in Settings"),
+        }
     }
 }
 
