@@ -53,6 +53,8 @@ fn main() {
     let mut ga = Genetic::new(problem, settings);
     for _i in 0..generations {
         ga.evolve();
+        ga.stats(5);
+        println!("best: {:?}", ga.get().first().unwrap());
     }
-    println!("Result: {:#?}", ga.get());
+    println!("Result: {:?}", ga.take());
 }

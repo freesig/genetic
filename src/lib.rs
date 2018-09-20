@@ -1,7 +1,7 @@
 extern crate rand;
 use rand::prelude::*;
-use std::ops::Range;
 use std::f64::INFINITY;
+use std::ops::Range;
 
 #[cfg(test)]
 mod tests;
@@ -11,14 +11,14 @@ pub struct Settings {
     pub pop_size: usize,
     /// Number of top performers to pass through
     pub num_best: usize,
-    /// The size of the tournament to 
+    /// The size of the tournament to
     /// select each pair of individuals
     pub tournament_size: usize,
     /// How likely a mutation is to occur
     pub mutation_rate: f32,
     /// This is_cycle the min and max of
     /// the population that the tournament selects from.
-    /// The actual size is chosen at random but 
+    /// The actual size is chosen at random but
     /// is within these bounds
     pub chunk_range: Range<usize>,
 }
@@ -42,7 +42,11 @@ pub trait Problem {
     type Individual;
     fn initial_pop(&mut self) -> Vec<Self::Individual>;
     fn fitness(&self, individual: &Self::Individual) -> f64;
-    fn crossover(&mut self, a: &Self::Individual, b: &Self::Individual) -> (Self::Individual, Self::Individual);
+    fn crossover(
+        &mut self,
+        a: &Self::Individual,
+        b: &Self::Individual,
+    ) -> (Self::Individual, Self::Individual);
     fn mutate(&mut self, individual: &mut Self::Individual);
 }
 
@@ -114,12 +118,16 @@ where
         new_population
     }
 
-    pub fn get(self) -> Vec<I> {
+    pub fn get(&self) -> &Vec<I> {
+        &self.population
+    }
+
+    pub fn take(self) -> Vec<I> {
         self.population
     }
 
     fn tournaments(&mut self) {
-        for i in 0..self.pop_size{
+        for i in 0..self.pop_size {
             self.choices[i] = self.tournament();
         }
     }
@@ -154,8 +162,16 @@ where
         }
         best_i.expect("Tournament failed")
     }
+
+    pub fn stats(&self, n: usize) {
+        let n = if n <= self.pop_size { n } else { self.pop_size };
+        for i in 0..n {
+            let fit = self.problem.fitness(&self.population[i]);
+            println!("Rank {} Fitness {}", i + 1, fit);
+        }
+    }
 }
 
-fn sort_by_fitness<I, T: Problem<Individual=I>>(population: &mut Vec<I>, problem: &T) {
+fn sort_by_fitness<I, T: Problem<Individual = I>>(population: &mut Vec<I>, problem: &T) {
     population.sort_by(|a, b| problem.fitness(b).partial_cmp(&problem.fitness(a)).unwrap());
 }
