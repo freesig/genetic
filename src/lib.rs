@@ -1,9 +1,12 @@
 extern crate rand;
+extern crate histogram as hist;
+extern crate textplots;
 use rand::prelude::*;
 use std::f64::INFINITY;
 use std::fmt::Debug;
 use std::mem;
 use std::ops::Range;
+use textplots::Plot;
 
 #[cfg(test)]
 mod tests;
@@ -190,6 +193,32 @@ where
 
     pub fn top(&mut self) -> f64 {
         self.problem.fitness(&self.population[0])
+    }
+
+    pub fn show_histogram(&self) {
+        let mut histo = hist::Histogram::new();
+        for x in &self.choices {
+            histo.increment(*x as u64);
+        }
+        let min = histo.minimum().unwrap() as f32;
+        let max = histo.maximum().unwrap() as f32;
+        /*
+        let points: Vec<(f32, f32)> = (0..10_i32)
+            .map(|i| (i * 10) as f64)
+            .map(|i| (i as f32, histo.percentile(i).unwrap() as f32))
+            .collect();
+            */
+        let points: Vec<(f32, f32)> = histo.into_iter()
+            .map(|h| (h.value() as f32, h.count() as f32))
+            .collect();
+
+        //let hist_disp = textplots::utils::histogram(&points, 0.0, 100.0, 10);
+        textplots::Chart::new(180, 60, 0.0, self.pop_size as f32)
+            .lineplot( textplots::Shape::Bars(&points) )
+            .nice();
+        //println!("choices: {:?}", self.choices);
+        //println!("min {}, max {}", min, max);
+        //println!("Standard deviation {}", histo.stddev().unwrap());
     }
 }
 

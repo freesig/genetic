@@ -5,3 +5,5 @@ authors = ["Tom Gowan <tomrgowan@gmail.com>"]
 
 [dependencies]
 rand = "0.5.5"
+histogram = "0.6.9"
+textplots = "0.3.0"
