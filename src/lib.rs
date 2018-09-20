@@ -175,6 +175,10 @@ where
             println!("Rank {} Fitness {}", i + 1, fit);
         }
     }
+
+    pub fn top(&mut self) -> f64 {
+        self.problem.fitness(&self.population[0])
+    }
 }
 
 fn sort_by_fitness<I, T: Problem<Individual = I>>(population: &mut Vec<I>, problem: &mut T) {
