@@ -10,9 +10,13 @@ struct DNA {
 
 impl Problem for DNA {
     type Individual = Vec<f64>;
-    fn initial_pop(&mut self) -> Vec<Self::Individual> {
+    fn initial_pop(&mut self, pop_size: usize) -> Vec<Self::Individual> {
         let dna = vec![0.5, 0.6, 0.2, 0.4, 0.4, 0.7];
-        vec![dna.clone(); 14]
+        let mut population = vec![dna.clone(); pop_size - 1];
+        let dna = vec![0.1, 0.1, 0.2, 0.2, 0.1, 0.9];
+        population.push(dna);
+        population
+
     }
     fn fitness(&mut self, individual: &Self::Individual) -> f64 {
         // Distance from 0.5

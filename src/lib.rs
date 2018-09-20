@@ -1,9 +1,9 @@
 extern crate rand;
 use rand::prelude::*;
 use std::f64::INFINITY;
-use std::ops::Range;
-use std::mem;
 use std::fmt::Debug;
+use std::mem;
+use std::ops::Range;
 
 #[cfg(test)]
 mod tests;
@@ -43,7 +43,7 @@ where
 
 pub trait Problem {
     type Individual;
-    fn initial_pop(&mut self) -> Vec<Self::Individual>;
+    fn initial_pop(&mut self, pop_size: usize) -> Vec<Self::Individual>;
     fn fitness(&mut self, individual: &Self::Individual) -> f64;
     fn crossover(
         &mut self,
@@ -66,10 +66,18 @@ where
             tournament_size,
             num_best,
         } = settings;
-        let population = problem.initial_pop();
+        assert!(pop_size % 2 == 0, "Population must be even");
+        assert!(pop_size > 0, "Can't have no population");
+        let population = problem.initial_pop(pop_size);
         let new_population = vec![I::default(); pop_size];
-        assert!(pop_size % 2 == 0);
         assert!(pop_size == population.len());
+        assert!(tournament_size > 0, "Can't have zero tournaments");
+        assert!(
+            mutation_rate >= 0.0 && mutation_rate <= 1.0,
+            "Mutation rate needs to be between 0.0 and 1.0"
+        );
+        assert!(chunk_range.end <= pop_size, "Chunk range must be <= population");
+        assert!(num_best <= pop_size, "Num best must be <= population");
         let rng = thread_rng();
         let choices = vec![0; pop_size];
         Genetic {
@@ -158,7 +166,9 @@ where
         let mut best_i: Option<usize> = None;
 
         let chunk = make_chunk(pop_size, chunk_range, rng);
+
         for _i in 0..tournament_size {
+            // Select random individual from population chunk
             let rand_i = rng.gen_range(chunk.start, chunk.end);
             let ind = problem.fitness(population.get(rand_i).unwrap());
             if ind >= best {
@@ -166,6 +176,7 @@ where
                 best_i = Some(rand_i);
             }
         }
+        // Should always result in a best due to >= -INFINITY
         best_i.expect("Tournament failed")
     }
 
@@ -186,6 +197,9 @@ fn sort_by_fitness<I, T: Problem<Individual = I>>(population: &mut Vec<I>, probl
     population.sort_by(|a, b| problem.fitness(b).partial_cmp(&problem.fitness(a)).unwrap());
 }
 
+/// Creates a range of indicies randomly
+/// from within the possible size
+/// and places it randomly amoung the population
 fn make_chunk(pop_size: usize, possible_size: &Range<usize>, rng: &mut ThreadRng) -> Range<usize> {
     assert!(possible_size.start > 0 && possible_size.end <= pop_size);
     // Chunk size needs to be (0..pop_size]

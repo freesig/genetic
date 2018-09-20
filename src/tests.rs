@@ -4,7 +4,7 @@ struct TestProblem;
 
 impl Problem for TestProblem {
     type Individual = Vec<f64>;
-    fn initial_pop(&mut self) -> Vec<Self::Individual> {
+    fn initial_pop(&mut self, _pop_size: usize) -> Vec<Self::Individual> {
         unimplemented!()
     }
 
