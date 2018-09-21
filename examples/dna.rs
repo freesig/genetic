@@ -48,13 +48,13 @@ fn main() {
     let problem = DNA { rng: thread_rng() };
     let settings = Settings {
         mutation_rate: 0.01,
-        pop_size: 14,
+        pop_size: 100,
         num_best: 0,
         tournament_size: 10,
-        chunk_range: 2..4,
+        chunk_range: 1..99,
         debug: true,
     };
-    let generations = 10000;
+    let generations = 20;
     let mut ga = Genetic::new(problem, settings);
     for _i in 0..generations {
         ga.evolve();

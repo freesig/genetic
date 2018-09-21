@@ -211,11 +211,7 @@ where
     }
 
     fn collect_data(&mut self) {
-        let Self {
-            histo,
-            choices,
-            ..
-        } = self;
+        let Self { histo, choices, .. } = self;
         if let Some(histo) = histo {
             for x in choices {
                 histo.increment(*x as u64).unwrap();
@@ -236,7 +232,7 @@ where
                     .nice();
 
                 println!("Standard deviation {}", histo.stddev().unwrap());
-            },
+            }
             None => println!("Debug is disabled. Set to 'true' in Settings"),
         }
     }

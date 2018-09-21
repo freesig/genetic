@@ -11,10 +11,21 @@ struct DNA {
 impl Problem for DNA {
     type Individual = Vec<f64>;
     fn initial_pop(&mut self, pop_size: usize) -> Vec<Self::Individual> {
+        /*
         let dna = vec![0.5, 0.6, 0.2, 0.4, 0.4, 0.7];
         let mut population = vec![dna.clone(); pop_size - 1];
         let dna = vec![0.1, 0.1, 0.2, 0.2, 0.1, 0.9];
         population.push(dna);
+        population
+        */
+        let mut population = Vec::<Vec<f64>>::with_capacity(pop_size);
+        for _ in 0..pop_size {
+            let mut dna = Vec::<f64>::with_capacity(6);
+            for _ in 0..6 {
+                dna.push(self.rng.gen_range(0.0, 1.0));
+            }
+            population.push(dna);
+        }
         population
     }
     fn fitness(&mut self, individual: &Self::Individual) -> f64 {
@@ -54,6 +65,7 @@ fn must_evolve() {
         num_best: 0,
         tournament_size: 10,
         chunk_range: 2..4,
+        debug: false,
     };
     let generations = 100;
     let mut ga = Genetic::new(problem, settings);
@@ -61,6 +73,28 @@ fn must_evolve() {
         ga.evolve();
     }
     assert_ne!(initial_pop, ga.take());
+}
+
+#[test]
+fn pass_through() {
+    let problem = DNA { rng: thread_rng() };
+    let pop_size = 14;
+    let settings = Settings {
+        mutation_rate: 0.0,
+        pop_size,
+        num_best: 14,
+        tournament_size: 10,
+        chunk_range: 2..4,
+        debug: false,
+    };
+    let generations = 100;
+    let mut ga = Genetic::new(problem, settings);
+    ga.evolve();
+    let first_gen = ga.get().clone();
+    for _i in 0..generations {
+        ga.evolve();
+    }
+    assert_eq!(first_gen, ga.take());
 }
 
 #[test]
@@ -73,6 +107,7 @@ fn no_tournament() {
         num_best: 0,
         tournament_size: 0,
         chunk_range: 2..4,
+        debug: false,
     };
     Genetic::new(problem, settings);
 }
@@ -87,6 +122,7 @@ fn neg_mut() {
         num_best: 0,
         tournament_size: 10,
         chunk_range: 2..4,
+        debug: false,
     };
     Genetic::new(problem, settings);
 }
@@ -101,6 +137,7 @@ fn mut_past_100() {
         num_best: 0,
         tournament_size: 10,
         chunk_range: 2..4,
+        debug: false,
     };
     Genetic::new(problem, settings);
 }
@@ -115,6 +152,7 @@ fn chunk_big() {
         num_best: 0,
         tournament_size: 10,
         chunk_range: 14..15,
+        debug: false,
     };
     Genetic::new(problem, settings);
 }
@@ -129,6 +167,7 @@ fn large_best() {
         num_best: 15,
         tournament_size: 10,
         chunk_range: 4..7,
+        debug: false,
     };
     Genetic::new(problem, settings);
 }
@@ -143,6 +182,7 @@ fn zero_pop() {
         num_best: 0,
         tournament_size: 10,
         chunk_range: 4..7,
+        debug: false,
     };
     Genetic::new(problem, settings);
 }
@@ -157,6 +197,7 @@ fn odd_pop() {
         num_best: 0,
         tournament_size: 10,
         chunk_range: 4..7,
+        debug: false,
     };
     Genetic::new(problem, settings);
 }
