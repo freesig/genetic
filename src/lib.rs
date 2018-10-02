@@ -75,6 +75,7 @@ where
             debug,
         } = settings;
         assert!(pop_size % 2 == 0, "Population must be even");
+        assert!(num_best % 2 == 0, "Pass through (num_best) must be even");
         assert!(pop_size > 0, "Can't have no population");
         let population = problem.initial_pop(pop_size);
         let new_population = vec![I::default(); pop_size];
@@ -111,13 +112,26 @@ where
         }
     }
 
+    /// Produces the next generation
+    /// Select top individuals to pass through.
+    /// Step Therough the population by 2.
+    /// Run tournaments to select a pair.
+    /// Find a crossover point (mathing node).
+    /// Crossover the selected pair at this point.
+    /// Apply mutations.
+    /// Add the new pair to the new generation
     pub fn evolve(&mut self) {
         self.tournaments();
         self.breed();
-        sort_by_fitness(&mut self.new_population, &mut self.problem);
+        // Not needed probably
+        // sort_by_fitness(&mut self.new_population, &mut self.problem);
         self.collect_data();
         // Swap buffers
         mem::swap(&mut self.population, &mut self.new_population);
+    }
+
+    pub fn sort(&mut self) {
+        sort_by_fitness(&mut self.new_population, &mut self.problem);
     }
 
     fn breed(&mut self) {

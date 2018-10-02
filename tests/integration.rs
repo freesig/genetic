@@ -164,7 +164,7 @@ fn large_best() {
     let settings = Settings {
         mutation_rate: 0.01,
         pop_size: 14,
-        num_best: 15,
+        num_best: 16,
         tournament_size: 10,
         chunk_range: 4..7,
         debug: false,
