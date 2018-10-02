@@ -48,20 +48,21 @@ fn main() {
     let problem = DNA { rng: thread_rng() };
     let settings = Settings {
         mutation_rate: 0.01,
-        pop_size: 100,
+        pop_size: 100000,
         num_best: 0,
         tournament_size: 10,
         chunk_range: 1..99,
-        debug: true,
+        debug: false,
     };
     let generations = 20;
     let mut ga = Genetic::new(problem, settings);
     for _i in 0..generations {
         ga.evolve();
-        ga.stats(5);
-        println!("Best: {:?}", ga.get().first().unwrap());
+        //ga.stats(5);
+        //println!("Best: {:?}", ga.get().first().unwrap());
     }
-    ga.show_histogram();
+    //ga.show_histogram();
+    ga.sort();
     println!("Top: {}", ga.top());
     println!("Result: {:?}", ga.take());
 }

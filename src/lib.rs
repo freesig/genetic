@@ -131,7 +131,7 @@ where
     }
 
     pub fn sort(&mut self) {
-        sort_by_fitness(&mut self.new_population, &mut self.problem);
+        sort_by_fitness(&mut self.population, &mut self.problem);
     }
 
     fn breed(&mut self) {
